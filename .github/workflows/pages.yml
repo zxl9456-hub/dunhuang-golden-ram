@@ -1,0 +1,36 @@
+name: Deploy Dunhuang Ram
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Verify and unpack website
+        run: |
+          echo "d1d548ae155fccd2b04ef90eeed13e8911fc9aad95b81415a9c527743f1f50ad  site-source.zip" | sha256sum --check
+          unzip -q site-source.zip -d extracted
+          test -f extracted/dunhuang-golden-ram/dist/index.html
+          touch extracted/dunhuang-golden-ram/dist/.nojekyll
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload website
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: extracted/dunhuang-golden-ram/dist
+      - name: Publish website
+        id: deployment
+        uses: actions/deploy-pages@v4
